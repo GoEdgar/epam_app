@@ -1,7 +1,24 @@
+import configparser
+
 from peewee import *
 
-db = PostgresqlDatabase(database='postgres', user='postgres')
+
+config = configparser.ConfigParser()
+config.read('../config.ini')
+
+params_for_db = {'host': config['db']['host'],
+                 'user': config['db']['user'],
+                 'password': config['db']['password'],
+                 'database': config['db']['database']}
+
+#if is test
+test_database = config['db']['test_database']
+if test_database:
+    params_for_db['database'] = test_database
+
+db = PostgresqlDatabase(**params_for_db)
 db.connect()
+
 
 class BaseModel(Model):
     class Meta:
@@ -19,6 +36,6 @@ class Employee(BaseModel):
 
 
 
-if __name__ == '__main__':
+if __name__ == '__main__' or config:
     db.drop_tables([Department, Employee])
     db.create_tables([Department, Employee])

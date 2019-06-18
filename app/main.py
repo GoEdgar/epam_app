@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask_restful import Api, Resource
+from flask_restful import Api, Resource, marshal_with
 
 from app.db_models import *
 
@@ -11,12 +11,11 @@ api = Api(app)
 
 class DepartmentApi(Resource):
     def get(self):
-        departments = Department.select('name_department')
-        return {'data':[dep for dep in departments]}, 200
+        departments = Department.select(Department.name_department)
+        return {'data':[dep.name_department for dep in departments]}, 200
     
     def post(self):
         if request.content_type == 'application/json':
-            print(request.json)
             try:
                 department = Department.create(**request.json)
             except IntegrityError:
@@ -24,6 +23,16 @@ class DepartmentApi(Resource):
             else:
                 department.save()
                 return {'data': request.json}
+
+    def delete(self):
+        if request.content_type == 'application/json':
+            try:
+                department = Department.delete().where(Department.name_department == request.json['name'])
+            except:
+                return {}, 400
+            else:
+                department.execute()
+                return {}, 200
 
 
 

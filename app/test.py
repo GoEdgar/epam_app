@@ -1,46 +1,37 @@
-import unittest
-import psycopg2
-import configparser
+import requests
+
+url = 'http://127.0.0.1:5000/'
 
 
-class MyTestCase(unittest.TestCase):
-    def setUp(self):
-        self.config = config = configparser.ConfigParser()
-        config.read('../config.ini')
-        
-        # write test config
-        config['db']['test_database'] = 'test_epam_app'
-        
-        with open('../config.ini', 'w') as f:
-            config.write(f)
+# DEPARTMENT TEST
+def dep_test():
+    get_dep = requests.get(url + 'department').json()
+    print(get_dep)
 
-        params_for_db = {'host': config['db']['host'],
-                         'user': config['db']['user'],
-                         'password': config['db']['password'],
-                         'database': config['db']['database']}
-        
+    id = requests.post(url + 'department',
+                             json={'name_department': 'Прогроммист'}).json()['data']['id']
+    print(id)
+    del_dep = requests.delete(url + 'department/' + str(id)).json()
+    print(del_dep)
 
-        # create test DB
-        with psycopg2.connect(**params_for_db) as connect:
-            connect.set_isolation_level(0)
-            with connect.cursor() as cursor:
-                try:
-                    cursor.execute('drop database test_epam_app')
-                finally:
-                    cursor.execute('create database test_epam_app')
-                    
-            
-        from app.main import app
-        app.testing = True
-        self.app = app.test_client()
-    
-    def tearDown(self):
-        self.config['db']['test_database'] = ''
-        with open('../config.ini', 'w') as f:
-            self.config.write(f)
+##################
+# EMPLOYEE TEST
+def emp_test():
+    get_emp = requests.get(url + 'employee').json()
+    #print(get_emp)
 
-    def test_home(self):
-        result = self.app.get('/department')
-        print(type(result))
-                
-unittest.main()
+    post_emp = requests.post(url + 'employee',
+                             json={'name_department': 'Повар',
+                                   'full_name': 'Edgar Gorobchuk',
+                                   'date_of_brith': '2001-05-28',
+                                   'salary': 100500}).json()
+    print(post_emp)
+    print('=====')
+
+    put_emp = requests.put(url + 'employee/' + '40',
+                           json={'full_name': 'Me Me'}).json()
+    print(put_emp)
+
+    requests.delete(url + 'employee/' + '2')
+
+emp_test()
